@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Allow: /pricing
+Allow: /login
+Allow: /register
+Allow: /forgot-password
+
+# Páginas de aplicación autenticada — sin valor de indexación
+Disallow: /dashboard
+Disallow: /admin/
+Disallow: /profile
+Disallow: /medical-profile
+Disallow: /medical-activation
+Disallow: /clinical
+Disallow: /checkout/
+Disallow: /onboarding/
+
+# Perfil de paciente vía QR — contiene datos personales de salud, nunca debe indexarse
+Disallow: /patient/
+
+Sitemap: https://mydoctordata.net/sitemap.xml

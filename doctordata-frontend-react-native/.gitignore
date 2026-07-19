@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+.export-check/
+android/
+ios/
+output/
+*.apk
+*.aab
+pnpm-lock.yaml
+.env

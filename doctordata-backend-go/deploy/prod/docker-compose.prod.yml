@@ -1,0 +1,67 @@
+# Compose de PRODUCCIÓN — vive en /opt/doctordata/ en el servidor doctordata-prod-app.
+# A diferencia de QA, aquí NO hay servicio "db": Postgres vive en un servidor físico
+# aparte (doctordata-prod-d, IP privada 10.9.96.3), administrado manualmente, fuera
+# de este pipeline. Las variables llegan directo del entorno de la sesión SSH — nunca
+# se escribe ningún archivo .env en el servidor.
+services:
+  api:
+    image: ghcr.io/raulferreyra/doctordata-backend-go:prod
+    container_name: doctordata-prod-api
+    environment:
+      PORT: "8080"
+      DEBUG: "false"
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      SA_USER: ${SA_USER}
+      SA_PASS: ${SA_PASS}
+      PAYMENT_GATEWAY: izipay
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      BACKEND_BASE_URL: ${BACKEND_BASE_URL}
+      IZIPAY_SHOP_ID: ${IZIPAY_SHOP_ID}
+      IZIPAY_CTX_MODE: "PRODUCTION"
+      IZIPAY_PRODUCTION_PASSWORD: ${IZIPAY_PRODUCTION_PASSWORD}
+      IZIPAY_PRODUCTION_PUBLIC_KEY: ${IZIPAY_PRODUCTION_PUBLIC_KEY}
+      IZIPAY_PRODUCTION_HMAC_KEY: ${IZIPAY_PRODUCTION_HMAC_KEY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
+      CONTACT_NOTIFY_EMAIL: ${CONTACT_NOTIFY_EMAIL}
+    volumes:
+      - doctordata_prod_uploads:/uploads
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/raulferreyra/doctordata-frontend-react-vite:prod
+    container_name: doctordata-prod-web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+volumes:
+  doctordata_prod_uploads:
+  caddy_data:
+  caddy_config:

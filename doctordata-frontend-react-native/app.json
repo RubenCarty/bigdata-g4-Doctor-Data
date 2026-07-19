@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "DoctorData QA",
+    "slug": "doctordata",
+    "version": "0.1.1",
+    "orientation": "portrait",
+    "icon": "./src/assets/favicon/android-chrome-192x192.png",
+    "splash": {
+      "image": "./src/assets/images/Doctor_Data_logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "platforms": [
+      "android"
+    ],
+    "android": {
+      "package": "pe.edu.autonoma.doctordata",
+      "versionCode": 2,
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/favicon/adaptive-icon-foreground.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "newArchEnabled": true,
+    "plugins": [
+      "./plugins/withDebugBundle",
+      "expo-font"
+    ]
+  }
+}
