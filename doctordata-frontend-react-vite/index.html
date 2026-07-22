@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DoctorData — Tu historial médico, siempre contigo</title>
+  <meta name="description" content="DoctorData centraliza tu información de salud de forma segura. Comparte tu historial con cualquier médico al instante y accede a él sin conexión." />
+  <meta name="keywords" content="historial médico digital, historia clínica electrónica, ficha médica online, alergias, código QR médico, expediente médico familiar, salud digital Perú" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#72ab4d" />
+
+  <!-- Open Graph / redes sociales — dominio real: mydoctordata.net -->
+  <link rel="canonical" href="https://mydoctordata.net/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DoctorData" />
+  <meta property="og:title" content="DoctorData — Tu historial médico, siempre contigo" />
+  <meta property="og:description" content="Centraliza tu información de salud de forma segura, compártela con cualquier médico al instante vía QR y accede a ella aunque no tengas conexión." />
+  <meta property="og:image" content="/favicon/apple-touch-icon-180x180.png" />
+  <meta property="og:url" content="https://mydoctordata.net/" />
+  <meta property="og:locale" content="es_PE" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="DoctorData — Tu historial médico, siempre contigo" />
+  <meta name="twitter:description" content="Centraliza tu información de salud de forma segura, compártela con cualquier médico al instante vía QR y accede a ella aunque no tengas conexión." />
+  <meta name="twitter:image" content="/favicon/apple-touch-icon-180x180.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
+
+  <!-- Apple -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon-180x180.png" />
+  <link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" />
+
+  <!-- Manifest y Windows -->
+  <link rel="manifest" href="/favicon/site.webmanifest" />
+  <meta name="msapplication-config" content="/favicon/browserconfig.xml" />
+  <meta name="msapplication-TileColor" content="#72ab4d" />
+
+  <!-- Datos estructurados (JSON-LD) para resultados enriquecidos en buscadores -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DoctorData",
+    "url": "https://mydoctordata.net",
+    "sameAs": [
+      "https://www.facebook.com/MyDoctorData",
+      "https://www.instagram.com/doctordataapp"
+    ],
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Web, Android",
+    "description": "DoctorData centraliza tu historial médico y el de tu familia de forma segura y cifrada. Comparte tu historial con cualquier médico al instante vía código QR y accede a él aunque no tengas conexión a internet.",
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": "PEN",
+      "lowPrice": "19.90",
+      "offerCount": "9"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <!-- qrcode: browser build cargado antes del bundle para evitar dependencia npm en Docker -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>

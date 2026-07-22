@@ -1,0 +1,97 @@
+name: Deploy Prod
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/doctordata-backend-go
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.1"
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test ./...
+
+  build-push-image:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: local
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:prod
+            ${{ env.IMAGE }}:prod-${{ github.sha }}
+
+  deploy:
+    needs: build-push-image
+    runs-on: ubuntu-latest
+    environment: PROD
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Subir docker-compose.prod.yml y Caddyfile
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VULTR_SSH_HOST }}
+          username: ${{ secrets.VULTR_SSH_USER }}
+          key: ${{ secrets.VULTR_SSH_PRIVATE_KEY }}
+          source: "deploy/prod/docker-compose.prod.yml,deploy/prod/Caddyfile"
+          target: "/opt/doctordata"
+          strip_components: 2
+
+      - name: Desplegar (sin escribir .env en disco)
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          POSTGRES_HOST: ${{ secrets.PROD_POSTGRES_HOST }}
+          POSTGRES_DB: ${{ secrets.PROD_POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.PROD_POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.PROD_POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.PROD_ENCRYPTION_KEY }}
+          SA_USER: ${{ secrets.PROD_SA_USER }}
+          SA_PASS: ${{ secrets.PROD_SA_PASS }}
+          IZIPAY_SHOP_ID: ${{ vars.IZIPAY_SHOP_ID }}
+          IZIPAY_PRODUCTION_PASSWORD: ${{ secrets.IZIPAY_PRODUCTION_PASSWORD }}
+          IZIPAY_PRODUCTION_PUBLIC_KEY: ${{ secrets.IZIPAY_PRODUCTION_PUBLIC_KEY }}
+          IZIPAY_PRODUCTION_HMAC_KEY: ${{ secrets.IZIPAY_PRODUCTION_HMAC_KEY }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_FROM_NAME: ${{ vars.SMTP_FROM_NAME }}
+          SMTP_FROM_ADDRESS: ${{ vars.SMTP_FROM_ADDRESS }}
+          CONTACT_NOTIFY_EMAIL: ${{ vars.CONTACT_NOTIFY_EMAIL }}
+          CORS_ALLOWED_ORIGINS: ${{ vars.PROD_CORS_ALLOWED_ORIGINS }}
+          FRONTEND_BASE_URL: ${{ vars.PROD_FRONTEND_BASE_URL }}
+          BACKEND_BASE_URL: ${{ vars.PROD_BACKEND_BASE_URL }}
+        with:
+          host: ${{ secrets.VULTR_SSH_HOST }}
+          username: ${{ secrets.VULTR_SSH_USER }}
+          key: ${{ secrets.VULTR_SSH_PRIVATE_KEY }}
+          envs: POSTGRES_HOST,POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD,JWT_SECRET,ENCRYPTION_KEY,SA_USER,SA_PASS,IZIPAY_SHOP_ID,IZIPAY_PRODUCTION_PASSWORD,IZIPAY_PRODUCTION_PUBLIC_KEY,IZIPAY_PRODUCTION_HMAC_KEY,SMTP_PASSWORD,SMTP_HOST,SMTP_USERNAME,SMTP_PORT,SMTP_FROM_NAME,SMTP_FROM_ADDRESS,CONTACT_NOTIFY_EMAIL,CORS_ALLOWED_ORIGINS,FRONTEND_BASE_URL,BACKEND_BASE_URL
+          script: |
+            set -e
+            cd /opt/doctordata
+            docker compose -f docker-compose.prod.yml pull api
+            docker compose -f docker-compose.prod.yml up -d --no-deps api
+            docker image prune -f

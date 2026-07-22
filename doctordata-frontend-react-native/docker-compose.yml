@@ -1,0 +1,10 @@
+services:
+  apk-builder:
+    build:
+      context: .
+      target: build
+    container_name: doctordata-apk-builder
+    volumes:
+      # El APK generado aparece en ./output/ del host
+      - ./output:/app/android/app/build/outputs/apk/debug
+    profiles: ["build"]

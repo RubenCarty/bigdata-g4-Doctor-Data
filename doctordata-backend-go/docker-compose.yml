@@ -1,0 +1,38 @@
+services:
+  api:
+    build:
+      context: .
+      target: local
+    container_name: doctordata-api
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    env_file: .env
+    volumes:
+      # Sin este volumen, todo lo subido a /uploads (fotos de perfil, carné CMP) vive solo en
+      # la capa de escritura del contenedor y se pierde en cada rebuild/recreate — pasó
+      # exactamente eso durante desarrollo. Con el volumen, sobrevive a docker-compose up
+      # --build y a restarts; solo se borra con un `docker-compose down -v` explícito.
+      - doctordata_uploads:/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: doctordata-db
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - doctordata_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-doctordata}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  doctordata_pg:
+  doctordata_uploads:

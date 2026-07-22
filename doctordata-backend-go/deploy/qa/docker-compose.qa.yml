@@ -1,0 +1,96 @@
+# Compose de QA — vive en /opt/doctordata/ en el servidor, subido por el workflow de
+# despliegue. Las variables llegan directo del entorno de la sesión SSH (exportadas por
+# GitHub Actions al momento del deploy) — nunca se escribe ningún archivo .env en el
+# servidor. "db" y "api" NO publican puertos al host: solo "web" (Caddy) expone 80/443.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: doctordata-qa-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - doctordata_qa_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/raulferreyra/doctordata-backend-go:qa
+    container_name: doctordata-qa-api
+    environment:
+      PORT: "8080"
+      DEBUG: "false"
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      SA_USER: ${SA_USER}
+      SA_PASS: ${SA_PASS}
+      # QA siempre prueba contra el sandbox TEST real de Izipay, nunca el stub — por eso va
+      # hardcodeado acá (mismo criterio que DEBUG: "false" arriba) en vez de vars.PAYMENT_GATEWAY.
+      PAYMENT_GATEWAY: izipay
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      BACKEND_BASE_URL: ${BACKEND_BASE_URL}
+      IZIPAY_SHOP_ID: ${IZIPAY_SHOP_ID}
+      IZIPAY_CTX_MODE: ${IZIPAY_CTX_MODE}
+      IZIPAY_TEST_PASSWORD: ${IZIPAY_TEST_PASSWORD}
+      IZIPAY_PRODUCTION_PASSWORD: ${IZIPAY_PRODUCTION_PASSWORD}
+      IZIPAY_TEST_PUBLIC_KEY: ${IZIPAY_TEST_PUBLIC_KEY}
+      IZIPAY_PRODUCTION_PUBLIC_KEY: ${IZIPAY_PRODUCTION_PUBLIC_KEY}
+      IZIPAY_TEST_HMAC_KEY: ${IZIPAY_TEST_HMAC_KEY}
+      IZIPAY_PRODUCTION_HMAC_KEY: ${IZIPAY_PRODUCTION_HMAC_KEY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
+      CONTACT_NOTIFY_EMAIL: ${CONTACT_NOTIFY_EMAIL}
+    volumes:
+      - doctordata_qa_uploads:/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/raulferreyra/doctordata-frontend-react-vite:qa
+    container_name: doctordata-qa-web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+volumes:
+  doctordata_qa_pg:
+  doctordata_qa_uploads:
+  caddy_data:
+  caddy_config:

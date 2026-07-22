@@ -1,0 +1,27 @@
+# Caddyfile de QA — la copia que realmente se aplica es la que queda horneada dentro de la
+# imagen del FRONTEND (doctordata-frontend-react-vite/Dockerfile, stage "qa"), porque ahí es
+# donde vive el servidor Caddy que sirve el build estático + reenvía /api/*. Esta copia acá es
+# solo para que quede versionada junto al resto de la infra de QA del backend — si tocas una,
+# toca la otra (doctordata-frontend-react-vite/deploy/qa/Caddyfile).
+qa.mydoctordata.net {
+	encode gzip
+
+	handle_path /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		-Server
+	}
+}
